@@ -1696,6 +1696,7 @@ static int app_synthandrecog_exec(struct ast_channel *chan, ast_app_data data)
 		f = ast_read(chan);
 		if (!f) {
 			ast_log(LOG_DEBUG, "(%s) Null frame. Hangup detected\n", recog_name);
+			speech_channel_stop(sar_session.synth_channel);
 			status = SPEECH_CHANNEL_STATUS_INTERRUPTED;
 			break;
 		}

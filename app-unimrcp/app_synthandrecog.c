@@ -1637,8 +1637,18 @@ static int app_synthandrecog_exec(struct ast_channel *chan, ast_app_data data)
 			apr_thread_mutex_unlock(sar_session.recog_channel->mutex);
 		}
 
-		if (recog_processing == 0)
+		if (recog_processing == 0) {
+			ast_log(LOG_DEBUG, "(%s) Ending processing loop  - because recognition is over\n", recog_name);
+			if (r) {
+				ast_log(LOG_DEBUG, "(%s) Ending processing loop - start_of_input is (%d)\n", recog_name, r->start_of_input);
+				if (sar_session.recog_channel && sar_session.recog_channel->mutex) {
+					apr_thread_mutex_lock(sar_session.recog_channel->mutex);
+					ast_log(LOG_DEBUG, "(%s) Ending processing loop - waited for mutex. start_of_input is (%d)\n", recog_name, r->start_of_input);
+					apr_thread_mutex_unlock(sar_session.recog_channel->mutex);
+				}
+			}
 			break;
+		}
 
 		if (prompt_processing) {
 			end_of_prompt = 0;
@@ -1690,6 +1700,16 @@ static int app_synthandrecog_exec(struct ast_channel *chan, ast_app_data data)
 					synth_channel_bargein_occurred(sar_session.synth_channel);
 				}
 				prompt_processing = 0;
+			} else if (prompt_processing) {
+				ast_log(LOG_DEBUG, "(%s) No Bargein detected.\n", recog_name);
+				if (r) {
+					ast_log(LOG_DEBUG, "(%s) No Bargein detected - start_of_input is (%d)\n", recog_name, r->start_of_input);
+					if (sar_session.recog_channel && sar_session.recog_channel->mutex) {
+						apr_thread_mutex_lock(sar_session.recog_channel->mutex);
+						ast_log(LOG_DEBUG, "(%s) No Bargein detected - waited for mutex. start_of_input is (%d)\n", recog_name, r->start_of_input);
+						apr_thread_mutex_unlock(sar_session.recog_channel->mutex);
+					}
+				}
 			}
 		}
 

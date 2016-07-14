@@ -660,8 +660,6 @@ static int app_synth_exec(struct ast_channel *chan, ast_app_data data)
 	}
 	while (running);
 
-	speech_channel_stop(mrcpsynth_session.schannel);
-
 	return mrcpsynth_exit(chan, &mrcpsynth_session, status);
 }
 

@@ -626,16 +626,12 @@ static int app_synth_exec(struct ast_channel *chan, ast_app_data data)
 		ms = ast_waitfor(chan, 100);
 		if (ms < 0) {
 			ast_log(LOG_DEBUG, "(%s) Hangup detected\n", name);
-			ast_log(LOG_DEBUG, "(%s) Announcing STOP\n", mrcpsynth_session.schannel->name);
-			speech_channel_stop(mrcpsynth_session.schannel);
 			return mrcpsynth_exit(chan, &mrcpsynth_session, SPEECH_CHANNEL_STATUS_INTERRUPTED);
 		}
 
 		f = ast_read(chan);
 		if (!f) {
 			ast_log(LOG_DEBUG, "(%s) Null frame == hangup() detected\n", name);
-			ast_log(LOG_DEBUG, "(%s) Announcing STOP\n", mrcpsynth_session.schannel->name);
-			speech_channel_stop(mrcpsynth_session.schannel);
 			return mrcpsynth_exit(chan, &mrcpsynth_session, SPEECH_CHANNEL_STATUS_INTERRUPTED);
 		}
 
@@ -663,6 +659,8 @@ static int app_synth_exec(struct ast_channel *chan, ast_app_data data)
 		}
 	}
 	while (running);
+
+	speech_channel_stop(mrcpsynth_session.schannel);
 
 	return mrcpsynth_exit(chan, &mrcpsynth_session, status);
 }

@@ -1289,8 +1289,10 @@ static int synthandrecog_exit(struct ast_channel *chan, sar_session_t *sar_sessi
 		if (sar_session->rawreadformat)
 			ast_channel_set_rawreadformat(chan, sar_session->rawreadformat);
 
-		if (sar_session->synth_channel)
+		if (sar_session->synth_channel) {
+			speech_channel_stop(sar_session->synth_channel);
 			speech_channel_destroy(sar_session->synth_channel);
+		}
 
 		if (sar_session->recog_channel) {
 			if (sar_session->recog_channel->session_id)

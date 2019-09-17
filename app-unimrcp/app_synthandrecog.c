@@ -1201,6 +1201,9 @@ static APR_INLINE int synthandrecog_prompts_advance(sar_session_t *sar_session)
 /* Start playing the current prompt. */
 static sar_prompt_item_t* synthandrecog_prompt_play(sar_session_t *sar_session, sar_options_t *sar_options)
 {
+	// Should not be necessary  sar_session.status = SPEECH_CHANNEL_STATUS_OK;
+	// or if != OK, log and return
+
 	if(sar_session->cur_prompt >= sar_session->prompts->nelts) {
 		ast_log(LOG_ERROR, "(%s) Out of bounds prompt index\n", sar_session->recog_channel->name);
 		sar_session.status = SPEECH_CHANNEL_STATUS_ERROR;
@@ -1229,6 +1232,7 @@ static sar_prompt_item_t* synthandrecog_prompt_play(sar_session_t *sar_session, 
 		if (sar_session->synth_channel) {
 			speech_channel_destroy(sar_session->synth_channel);
 			sar_session->synth_channel = NULL;
+// normal - no error
 		}
 	}
 	else {
@@ -1758,6 +1762,7 @@ static int app_synthandrecog_exec(struct ast_channel *chan, ast_app_data data)
 
 		if (f->frametype == AST_FRAME_VOICE && f->datalen) {
 			len = f->datalen;
+// For a separate BUG fix...  this is where we sometimes hit speech_channel_write() -> audio_queue_write() -> Audio queue overflow!
 			if (speech_channel_write(sar_session.recog_channel, ast_frame_get_data(f), &len) != 0) {
 				ast_frfree(f);
 				break;

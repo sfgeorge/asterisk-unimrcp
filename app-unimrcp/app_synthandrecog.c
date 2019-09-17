@@ -193,6 +193,7 @@ struct sar_session_t {
 	struct ast_filestream *filestream;         /* filestream, if any */
 	off_t                  max_filelength;     /* max file length used with file playing, if any */
 	int                    it_policy;          /* input timers policy (sar_it_policies) */
+	speech_channel_status_t   status;          /* Status of the Channel OK, INTERRUPTED, ERROR */
 };
 
 typedef struct sar_session_t sar_session_t;
@@ -1201,15 +1202,27 @@ static APR_INLINE int synthandrecog_prompts_advance(sar_session_t *sar_session)
 static sar_prompt_item_t* synthandrecog_prompt_play(sar_session_t *sar_session, sar_options_t *sar_options)
 {
 	if(sar_session->cur_prompt >= sar_session->prompts->nelts) {
-		ast_log(LOG_ERROR, "(%s) Out of bounds prompt index\n", sar_session->synth_channel->name);
+		ast_log(LOG_ERROR, "(%s) Out of bounds prompt index\n", sar_session->recog_channel->name);
+		sar_session.status = SPEECH_CHANNEL_STATUS_ERROR;
 		return NULL;
 	}
 
 	sar_prompt_item_t *prompt_item = &APR_ARRAY_IDX(sar_session->prompts, sar_session->cur_prompt, sar_prompt_item_t);
 
+	struct ast_frame *f = NULL;
+	f = ast_read(sar_session->chan);
+	if (!f) {
+		ast_log(LOG_DEBUG, "(%s) synthandrecog_prompt_play interrupted on %s, channel read is a null frame. Hangup detected\n", sar_session->recog_channel->name, ast_channel_name(sar_session->chan));
+		sar_session.status = SPEECH_CHANNEL_STATUS_INTERRUPTED;
+		return NULL;
+	}
+	ast_frfree(f);
+
 	if(prompt_item->is_audio_file) {
 		sar_session->filestream = astchan_stream_file(sar_session->chan, prompt_item->content, &sar_session->max_filelength);
 		if (!sar_session->filestream) {
+			ast_log(LOG_DEBUG, "(%s) synthandrecog_prompt_play astchan_stream_file FAILED on %s.\n", sar_session->recog_channel->name, ast_channel_name(sar_session->chan));
+			sar_session.status = SPEECH_CHANNEL_STATUS_ERROR;
 			return NULL;
 		}
 		/* If synth channel has already been created, destroy it at this stage in order to release an associated TTS license. */
@@ -1232,6 +1245,8 @@ static sar_prompt_item_t* synthandrecog_prompt_play(sar_session_t *sar_session, 
 											NULL,
 											sar_session->chan);
 			if (!sar_session->synth_channel) {
+				ast_log(LOG_DEBUG, "(%s) synthandrecog_prompt_play speech_channel_create FAILED on %s.\n", synth_name, ast_channel_name(sar_session->chan));
+				sar_session.status = SPEECH_CHANNEL_STATUS_ERROR;
 				return NULL;
 			}
 
@@ -1247,12 +1262,14 @@ static sar_prompt_item_t* synthandrecog_prompt_play(sar_session_t *sar_session, 
 			synth_profile = get_synth_profile(synth_profile_option);
 			if (!synth_profile) {
 				ast_log(LOG_ERROR, "(%s) Can't find profile, %s\n", sar_session->synth_channel->name, synth_profile_option);
+				sar_session.status = SPEECH_CHANNEL_STATUS_ERROR;
 				return NULL;
 			}
 
 			/* Open synthesis channel. */
 			if (speech_channel_open(sar_session->synth_channel, synth_profile) != 0) {
 				ast_log(LOG_ERROR, "(%s) Unable to open speech channel\n", sar_session->synth_channel->name);
+				sar_session.status = SPEECH_CHANNEL_STATUS_ERROR;
 				return NULL;
 			}
 		}
@@ -1261,13 +1278,14 @@ static sar_prompt_item_t* synthandrecog_prompt_play(sar_session_t *sar_session, 
 		const char *content_type = NULL;
 		/* Determine synthesis content type. */
 		if (determine_synth_content_type(sar_session->synth_channel, prompt_item->content, &content, &content_type) != 0) {
-			ast_log(LOG_WARNING, "(%s) Unable to determine synthesis content type\n", sar_session->synth_channel->name);
+			ast_log(LOG_ERROR, "(%s) Unable to determine synthesis content type\n", sar_session->synth_channel->name);  // this really is an error!  The next step would bail out horribly without a content_type
 			return NULL;
 		}
 
 		/* Start synthesis. */
 		if (synth_channel_speak(sar_session->synth_channel, content, content_type, sar_options->synth_hfs) != 0) {
 			ast_log(LOG_ERROR, "(%s) Unable to send SPEAK request\n", sar_session->synth_channel->name);
+			sar_session.status = SPEECH_CHANNEL_STATUS_ERROR;
 			return NULL;
 		}
 	}
@@ -1377,6 +1395,7 @@ static int app_synthandrecog_exec(struct ast_channel *chan, ast_app_data data)
 	sar_session.filestream = NULL;
 	sar_session.max_filelength = 0;
 	sar_session.it_policy = IT_POLICY_AUTO;
+	sar_session.status = SPEECH_CHANNEL_STATUS_OK;
 
 	sar_options.recog_hfs = NULL;
 	sar_options.synth_hfs = NULL;

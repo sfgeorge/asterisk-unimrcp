@@ -458,8 +458,10 @@ static int mrcpsynth_exit(struct ast_channel *chan, mrcpsynth_session_t *mrcpsyn
 		if (mrcpsynth_session->rawwriteformat)
 			ast_channel_set_rawwriteformat(chan, mrcpsynth_session->rawwriteformat);
 
-		if (mrcpsynth_session->schannel)
+		if (mrcpsynth_session->schannel) {
+			speech_channel_stop(mrcpsynth_session->schannel);
 			speech_channel_destroy(mrcpsynth_session->schannel);
+		}
 
 		if (mrcpsynth_session->pool)
 			apr_pool_destroy(mrcpsynth_session->pool);

@@ -124,6 +124,8 @@ static APR_INLINE ast_format_compat* ast_get_speechformat(ast_format_compat *raw
 	if(raw_format == ast_format_ulaw || raw_format == ast_format_alaw)
 		return raw_format;
 
+ast_log(LOG_DEBUG, "DBG BAD LOGIC PATH\n");
+
 	int sample_rate = ast_format_get_sample_rate(raw_format);
 	return ast_format_cache_get_slin_by_rate(sample_rate);
 }
@@ -131,6 +133,9 @@ static APR_INLINE const char* ast_format_get_unicodec(const ast_format_compat *f
 {
 	if(format == ast_format_ulaw)
 		return "PCMU";
+
+ast_log(LOG_DEBUG, "DBG BAD LOGIC PATH\n");
+
 	if(format == ast_format_alaw)
 		return "PCMA";
 	/*! Use Raw 16-bit Signed Linear PCM for the rest */
@@ -141,6 +146,9 @@ static APR_INLINE int ast_format_get_bytes_per_sample(const ast_format_compat *f
 	/*! Raw mu-law and A-law data (G.711) */
 	if(format == ast_format_ulaw || format == ast_format_alaw)
 		return 1;
+
+ast_log(LOG_DEBUG, "DBG BAD LOGIC PATH\n");
+
 	/*! Use Raw 16-bit Signed Linear PCM for the rest */
 	return 2 * ast_format_get_sample_rate(format) / 8000;
 }
@@ -157,6 +165,7 @@ static APR_INLINE ast_format_compat* ast_get_speechformat(ast_format_compat *raw
 			break;
 		default:
 		{
+ast_log(LOG_DEBUG, "DBG BAD LOGIC PATH\n");
 			int sample_rate = ast_format_get_sample_rate(raw_format);
 			if(sample_rate == 16000)
 				speech_format->id = AST_FORMAT_SLINEAR16;
@@ -170,6 +179,9 @@ static APR_INLINE const char* ast_format_get_unicodec(const ast_format_compat *f
 {
 	if(format->id == AST_FORMAT_ULAW)
 		return "PCMU";
+
+ast_log(LOG_DEBUG, "DBG BAD LOGIC PATH\n");
+
 	if(format->id == AST_FORMAT_ALAW)
 		return "PCMA";
 	/*! Use Raw 16-bit Signed Linear PCM for the rest */
@@ -180,6 +192,9 @@ static APR_INLINE int ast_format_get_bytes_per_sample(const ast_format_compat *f
 	/*! Raw mu-law and A-law data (G.711) */
 	if(format->id == AST_FORMAT_ULAW || format->id == AST_FORMAT_ALAW)
 		return 1;
+
+ast_log(LOG_DEBUG, "DBG BAD LOGIC PATH\n");
+
 	/*! Use Raw 16-bit Signed Linear PCM for the rest */
 	return 2 * ast_format_get_sample_rate(format) / 8000;
 }

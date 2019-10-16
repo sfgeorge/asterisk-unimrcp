@@ -251,6 +251,8 @@ speech_channel_t *speech_channel_create(
 		} else {
 			ast_log(LOG_DEBUG, "Created speech channel: Name=%s, Type=%s, Codec=%s, Rate=%u on %s\n", schan->name, speech_channel_type_to_string(schan->type), schan->codec, schan->rate,
 				ast_channel_name(chan));
+
+			ast_log(LOG_NOTICE, "DBG speech_channel_create() using format %s bytes_per_sample %d silence %d on %s\n", schan->format, schan->bytes_per_sample, schan->silence, ast_channel_name(chan));
 		}
 		
 		if (!ast_strlen_zero(rec_file_path)) {

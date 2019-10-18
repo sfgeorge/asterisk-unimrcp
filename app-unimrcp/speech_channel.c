@@ -718,7 +718,7 @@ static APR_INLINE void ast_frame_fill(speech_channel_t *schannel, struct ast_fra
 	ast_frame_set_format(fr, schannel->format);
 	fr->datalen = size;
 	fr->samples = size / schannel->bytes_per_sample;
-	ast_log(LOG_NOTICE, "DBG4 ast-uni ast_frame_fill() using format %s size %d bytes_per_sample %d silence %d on %s\n", schan->format, size, schan->bytes_per_sample, schan->silence, ast_channel_name(chan));
+	ast_log(LOG_NOTICE, "DBG4 ast-uni ast_frame_fill() using format %s size %d bytes_per_sample %d silence %d on %s\n", schannel->format, size, schannel->bytes_per_sample, schannel->silence, ast_channel_name(schannel));
 	ast_frame_set_data(fr, data);
 	fr->mallocd = 0;
 	fr->offset = AST_FRIENDLY_OFFSET;
